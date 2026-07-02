@@ -1,11 +1,17 @@
 {
   "name": "statsotter",
-  "owner": { "name": "StatsOtter" },
+  "owner": {
+    "name": "StatsOtter"
+  },
   "plugins": [
     {
       "name": "statsotter",
       "source": "./",
       "description": "Talk to StatsOtter in plain language: create, edit, publish and delete cards, edit the site's left sidebar, or run a published workflow on your local data — no slash commands, no web UI needed."
     }
-  ]
+  ],
+  "metadata": {
+    "description": "StatsOtter for Claude Code — manage cards and the site's left sidebar, or run published workflows on local data, all in plain language.",
+    "version": "1.1.0"
+  }
 }
