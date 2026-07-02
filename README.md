@@ -2,15 +2,17 @@
 
 Talk to [StatsOtter](https://statsotter.ai) in plain language, straight from
 Claude Code. **There are no slash commands** — just say what you want, in any
-language:
+language (examples below in English; any language works):
 
 ```
-"Publish this repo to StatsOtter."            "发布这个仓库到 StatsOtter"
-"Show my cards."                              "我有哪些卡片？"
-"Rename my HonestDiD card to …"               "把摘要改得更简洁一点"
-"Rewrite step 3's code to use att_gt()."      "把这张卡片下架"
-"Publish the draft."                          "删掉那张测试卡片"
-"Show me the left sidebar."                   "左边栏加一个 'Synthetic Control' 分类，放在 DiD 下面"
+"Publish this repo to StatsOtter."
+"Show my cards."
+"Rename my HonestDiD card to …"
+"Make the summary more concise."
+"Rewrite step 3's code to use att_gt()."
+"Publish the draft."  /  "Unpublish that card."  /  "Delete the test card."
+"Show me the left sidebar."
+"Add a 'Synthetic Control' sub-category under DiD, and move IV to the top."
 "Who changed the sidebar last week? Roll it back."
 "Find a workflow for this panel data and estimate the treatment effect."
 ```

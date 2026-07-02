@@ -1,6 +1,6 @@
 ---
 name: tackle
-description: Run a published StatsOtter workflow on the user's local data. Use when the user wants to analyze data with StatsOtter, find which statistical / causal-inference workflow fits their goal or dataset ("estimate the treatment effect of the rollout", "event-study on these panels", "用 statsotter 分析这个数据"), or asks what method the StatsOtter platform recommends for a task.
+description: Run a published StatsOtter workflow on the user's local data. Use when the user wants to analyze data with StatsOtter, find which statistical / causal-inference workflow fits their goal or dataset ("estimate the treatment effect of the rollout", "event-study on these panels", "analyze this data with StatsOtter" — any language), or asks what method the StatsOtter platform recommends for a task.
 ---
 
 # StatsOtter — tackle: fit a workflow to the user's data and run it

@@ -1,6 +1,6 @@
 ---
 name: manage
-description: Manage StatsOtter (statsotter.ai) through plain conversation — there are no slash commands. Use whenever the user mentions StatsOtter (in any language, e.g. 卡片/左边栏/发布) or wants to connect their StatsOtter account / API key; list their cards or drafts; turn a repo or tutorial into a card; view, edit, rename, retag or rewrite a card (any field, steps, figures, AI notes); publish or unpublish a card; delete a card; view or edit the site's left sidebar (fields and sub-categories); or inspect/restore sidebar history.
+description: Manage StatsOtter (statsotter.ai) through plain conversation — there are no slash commands. Use whenever the user mentions StatsOtter (in any language) or wants to connect their StatsOtter account / API key; list their cards or drafts; turn a repo or tutorial into a card; view, edit, rename, retag or rewrite a card (any field, steps, figures, AI notes); publish or unpublish a card; delete a card; view or edit the site's left sidebar (fields and sub-categories); or inspect/restore sidebar history.
 ---
 
 # StatsOtter — manage cards & the left sidebar from Claude Code
@@ -105,7 +105,7 @@ features instead of attempting the call.
 ### Who am I / account status
 `me` → report username, role (member / site admin), card and draft counts.
 
-### List cards — "我的卡片" / "show my drafts" / "what's on the site?"
+### List cards — "show my cards" / "show my drafts" / "what's on the site?"
 `cards` (own), `cards --all` (site admin, everyone's), `catalog` (published
 feed). Render a compact table: title (slug), draft/published, versions,
 updated date, link. Offer next actions (open, edit, publish…).
@@ -157,7 +157,7 @@ as external steps — platform-method links don't survive this path (use a
 `steps` PATCH when those matter). The lesson step above applies here too:
 after the rewrite lands, feed the user's instruction back via `lesson`.
 
-### Create a card from this repo — "publish this repo to StatsOtter" / "发布成卡片"
+### Create a card from this repo — "publish this repo to StatsOtter"
 1. Scope: whole repo, or one tutorial/vignette the user names.
 2. **Study the material seriously** — README, docs/vignettes/examples, and
    enough source to cite real function names, arguments and outputs.
@@ -189,7 +189,7 @@ State the exact title and that deletion is **permanent** (votes, comments,
 all doc versions). On an explicit yes: `delete SLUG`. Mention that a local
 `statsotter.md`, if present, could recreate it.
 
-### View the sidebar — "左边栏现在长什么样?"
+### View the sidebar — "what does the left sidebar look like?"
 `tax get` → render the tree: each field with its blurb, tag mappings, live
 card count, and its sub-categories indented. Note `can_edit` silently.
 
@@ -215,7 +215,7 @@ Site admins only (`can_edit` from `tax get`; explain otherwise).
    like a commit subject.
 5. Report the new tree (and that history/rollback exists).
 
-### Sidebar history / undo — "谁改了边栏?" / "roll it back"
+### Sidebar history / undo — "who changed the sidebar?" / "roll it back"
 `tax history` → table of id, date, author, label, one-line diff. Each
 revision is a snapshot of the sidebar **after** its labelled change — so to
 undo the change described in revision N, restore the revision listed *below*
