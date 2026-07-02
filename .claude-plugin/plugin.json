@@ -1,0 +1,8 @@
+{
+  "name": "statsotter",
+  "description": "Talk to StatsOtter in plain language from Claude Code: create and edit cards, publish/unpublish, edit the site's left sidebar, or run a published workflow on your local data. No slash commands — just ask.",
+  "version": "1.0.0",
+  "author": {
+    "name": "StatsOtter"
+  }
+}
