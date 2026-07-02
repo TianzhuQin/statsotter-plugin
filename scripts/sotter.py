@@ -26,6 +26,9 @@ Usage:
   sotter.py search QUERY [-k N]          rank published cards for a goal
   sotter.py feedback KIND [--slug S] [--query Q] [--note N]
   sotter.py gaps                         most-wanted methods
+  sotter.py lesson --instruction TEXT [--slug S] [--context TEXT]
+                                         teach the card-generation AI from an
+                                         edit instruction (site admins)
   sotter.py tax get                      the left-rail sidebar tree
   sotter.py tax put (--json FILE | -) [--label TEXT] [--expect-head N|null]
                                          replace the tree (admins)
@@ -269,6 +272,13 @@ def main():
 
     sub.add_parser("gaps")
 
+    p = sub.add_parser("lesson")
+    p.add_argument("--instruction", required=True,
+                   help="the user's edit request, in their own words")
+    p.add_argument("--slug", default="")
+    p.add_argument("--context", default="",
+                   help="one line on what changed as a result")
+
     p = sub.add_parser("tax")
     tax = p.add_subparsers(dest="tax_cmd", required=True)
     tax.add_parser("get")
@@ -354,6 +364,13 @@ def main():
         return emit(*request("POST", "/api/v1/feedback", body))
     if args.cmd == "gaps":
         return emit(*request("GET", "/api/v1/gaps"))
+    if args.cmd == "lesson":
+        body = {"instruction": args.instruction}
+        if args.slug:
+            body["slug"] = args.slug
+        if args.context:
+            body["context"] = args.context
+        return emit(*request("POST", "/api/v1/lessons", body))
     if args.cmd == "tax":
         if args.tax_cmd == "get":
             return emit(*request("GET", "/api/v1/taxonomy"))

@@ -50,6 +50,7 @@ two directories above this SKILL.md.)
 | `tax get` | sidebar tree + `can_edit` + `head` revision id |
 | `tax put --json FILE\|- [--label TEXT] [--expect-head N]` | replace the sidebar tree |
 | `tax history` / `tax restore ID` | sidebar revision log / one-click rollback |
+| `lesson --instruction "…" [--slug S] [--context "…"]` | teach the card-generation AI from an edit instruction (site admins) |
 | `catalog` · `search QUERY` · `feedback KIND …` · `gaps` | discovery (used mostly by the tackle skill) |
 
 Exit 0 = success; non-zero prints the server's JSON error body — read its
@@ -81,6 +82,10 @@ features instead of attempting the call.
 2. **Resolve cards by title, act by slug.** When the user names a card
    loosely, list their cards and match case-insensitively against titles and
    slugs. One match → proceed. Several or zero → show the candidates and ask.
+   **Site admins (yiqingxu, tianzhuqin) may edit, publish, unpublish and
+   delete EVERY card on the platform** — when the card isn't under their own
+   account, resolve it with `cards --all` (or `catalog`); the API allows it
+   with the same key.
 3. **Show before you change.** For every write, present a compact
    before → after summary (only the fields that change) and get a yes before
    sending. One confirmation per change is enough — don't re-ask.
@@ -131,6 +136,16 @@ Summarize; show the `card_url` link.
 4. Report what changed + the new doc version count + `card_url` (plus
    `doc_url` — the web doc editor with the full version history — when the
    user might want to inspect versions).
+5. **Feed the lesson back** (site admins only — skip silently otherwise):
+   after a successful edit, teach the card-generation AI so future cards
+   start out right:
+   `lesson --instruction "<the user's request, verbatim in their own words>"
+   --slug SLUG --context "<one line on what changed>"`.
+   The server distils it into the guidelines every future AI import reads
+   (one-off facts and duplicates are dropped automatically). Non-blocking:
+   a failure here never affects the edit — just mention it briefly. Skip it
+   for pure housekeeping (delete, publish/unpublish, undo) where there is
+   no content preference to learn.
 
 For a **big rewrite** ("restructure the whole card", "regenerate from the
 repo"), prefer the doc roundtrip: `doc SLUG --save statsotter.md` (the client
@@ -139,7 +154,8 @@ validates as-is) → edit the file per
 [references/template.md](references/template.md) → `validate` → confirm →
 `upload statsotter.md --target SLUG`. Note: a doc upload rebuilds all steps
 as external steps — platform-method links don't survive this path (use a
-`steps` PATCH when those matter).
+`steps` PATCH when those matter). The lesson step above applies here too:
+after the rewrite lands, feed the user's instruction back via `lesson`.
 
 ### Create a card from this repo — "publish this repo to StatsOtter" / "发布成卡片"
 1. Scope: whole repo, or one tutorial/vignette the user names.

@@ -24,18 +24,39 @@ What it covers:
 - **Left sidebar** — view the browse rail from any account; site admins can
   reshape it (fields, sub-categories, tag mappings, ordering), with the full
   history and one-click rollback the website offers.
+- **Site admins** (yiqingxu, tianzhuqin) can edit, publish and delete **every**
+  card on the platform, not just their own — full moderation from the chat.
+- **It learns.** When a site admin edits a card, the edit instruction is
+  distilled into the guidelines the platform's card-generation AI reads — so
+  every future card starts out closer to how you want it.
 - **Tackle** — describe a goal, and the plugin finds the best-fitting
   published workflow, explains why, and (after your confirmation) runs it on
   the data in your folder. Your data never leaves the machine.
 
 ## Install
 
-From the lightweight distribution repo (recommended):
+**The zero-effort way**: paste this into any Claude Code session and let it
+install (or update) the plugin for you:
+
+> Install or update the StatsOtter plugin for Claude Code. Run
+> `claude plugin marketplace add TianzhuQin/statsotter-plugin`; if it says the
+> marketplace already exists, run `claude plugin marketplace update statsotter`
+> instead. Then run `claude plugin install statsotter@statsotter`; if it is
+> already installed, run `claude plugin update statsotter` instead. Verify with
+> `claude plugin list` (statsotter should be listed and enabled), then tell me
+> to restart Claude Code — after that I can just talk to it in plain language
+> ("publish this repo to StatsOtter", "show my cards", "edit the left
+> sidebar"); it has no slash commands.
+
+Manually, inside the Claude Code REPL:
 
 ```
 /plugin marketplace add TianzhuQin/statsotter-plugin
 /plugin install statsotter@statsotter
 ```
+
+To update later: `claude plugin marketplace update statsotter` then
+`claude plugin update statsotter` (or paste the prompt above again).
 
 For local development, point Claude Code straight at the folder:
 
