@@ -39,11 +39,13 @@ https://statsotter.ai, then `setup <key>`.)
    - If genuinely nothing fits: say so, stop, and log the gap so the
      platform learns — `feedback gap --query "<the goal>"`.
 
-4. **Open their notes and judge.** For each shortlisted slug, `doc SLUG` —
-   the card's full markdown: Steps with code, Inputs, Input example,
-   `## AI Notes`, and a `## Community signals` section (votes, recent
-   discussion verbatim — weigh caveats users raised). Narrow to the single
-   best workflow, keeping one or two alternatives in mind.
+4. **Open their notes and judge.** For each shortlisted slug,
+   `doc SLUG --with-signals` — the card's full markdown: Steps with code,
+   Inputs, Input example, `## AI Notes`, and a `## Community signals` section
+   (votes, recent discussion verbatim — weigh caveats users raised). The flag
+   is what keeps that block: a plain `doc SLUG` returns the upload-ready
+   document alone, with no community signals in it. Narrow to the single best
+   workflow, keeping one or two alternatives in mind.
 
 5. **Introduce it, then CONFIRM — mandatory.** Present in plain language:
    the chosen card's title, summary and `card_url`; why it fits this goal

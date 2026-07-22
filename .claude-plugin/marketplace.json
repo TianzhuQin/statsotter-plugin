@@ -7,11 +7,11 @@
     {
       "name": "statsotter",
       "source": "./",
-      "description": "Talk to StatsOtter in plain language: create, edit, publish and delete cards, edit the site's left sidebar, or run a published workflow on your local data — no slash commands, no web UI needed."
+      "description": "Talk to StatsOtter in plain language: create, edit, publish and delete cards, download and edit the markdown knowledge document behind a card, research thin docs into deep ones, edit the site's left sidebar, or run a published workflow on your local data — no slash commands, no web UI needed."
     }
   ],
   "metadata": {
-    "description": "StatsOtter for Claude Code — manage cards and the site's left sidebar, or run published workflows on local data, all in plain language.",
-    "version": "1.1.0"
+    "description": "StatsOtter for Claude Code — manage cards and the site's left sidebar, edit the knowledge documents that train the platform's AI, and run published workflows on local data, all in plain language.",
+    "version": "1.2.0"
   }
 }

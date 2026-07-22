@@ -21,7 +21,10 @@ Usage:
   sotter.py publish SLUG                 draft → public feed
   sotter.py unpublish SLUG               public feed → draft
   sotter.py delete SLUG                  permanent!
-  sotter.py doc SLUG [--save FILE]       full knowledge markdown
+  sotter.py doc SLUG [--save [FILE]] [--version N] [--versions] [--with-signals]
+                                         download a knowledge doc; bare --save
+                                         writes ./<slug>.md, upload-ready
+  sotter.py audit [--all]                docs that are too thin to teach an AI
   sotter.py catalog                      every published card (title/summary/tags)
   sotter.py search QUERY [-k N]          rank published cards for a goal
   sotter.py feedback KIND [--slug S] [--query Q] [--note N]
@@ -46,6 +49,10 @@ import urllib.request
 
 DEFAULT_BASE_URL = "https://statsotter.ai"
 CONFIG_NAME = ".statsotter.json"
+
+# `--save` with no value means "pick the filename for me" (./<slug>.md); a
+# sentinel keeps that distinguishable from `--save ""`.
+SAVE_DEFAULT = object()
 
 
 def die(msg, code=2):
@@ -130,9 +137,28 @@ def request(method, path, body=None, cfg=None):
         die(f"Cannot reach {cfg['base_url']} — {getattr(e, 'reason', e)}", 1)
 
 
+def quality_hint(quality):
+    """One human line for a QUALITY block, so the score and the actionable
+    warning codes are visible without reading the whole payload. Returns None
+    when the response carries no quality block (e.g. an older server)."""
+    if not isinstance(quality, dict) or "score" not in quality:
+        return None
+    codes = [w.get("code") for w in (quality.get("warnings") or [])
+             if isinstance(w, dict) and w.get("code")]
+    return " · ".join([
+        f"score {quality.get('score')}/100",
+        f"doc {quality.get('doc_chars')} chars",
+        f"AI Notes {quality.get('ai_notes_chars')} chars",
+        "warnings: " + (", ".join(codes) if codes else "none"),
+    ])
+
+
 def emit(status, payload):
     payload = dict(payload)
     payload.setdefault("http_status", status)
+    hint = quality_hint(payload.get("quality"))
+    if hint:
+        payload.setdefault("quality_hint", hint)
     print(json.dumps(payload, indent=2, ensure_ascii=False))
     sys.exit(0 if 200 <= status < 300 else 1)
 
@@ -140,6 +166,13 @@ def emit(status, payload):
 def quoted(slug):
     import urllib.parse
     return urllib.parse.quote(str(slug), safe="")
+
+
+def default_doc_path(slug):
+    """./<slug>.md for a bare `--save`. The slug comes from the server, but
+    sanitise anyway so a hand-typed one can never escape the working folder."""
+    safe = "".join(c if (c.isalnum() or c in "-_") else "-" for c in str(slug))
+    return pathlib.Path.cwd() / ((safe.strip("-") or "card") + ".md")
 
 
 def read_file(path):
@@ -222,66 +255,85 @@ def main():
     ap = argparse.ArgumentParser(prog="sotter.py", add_help=True)
     sub = ap.add_subparsers(dest="cmd", required=True)
 
-    p = sub.add_parser("setup")
+    p = sub.add_parser("setup", help="store and verify the API key")
     p.add_argument("key")
     p.add_argument("url", nargs="?")
     p.add_argument("--global", dest="global_config", action="store_true",
                    help="write ~/.statsotter.json (all projects) instead of ./")
 
-    sub.add_parser("me")
+    sub.add_parser("me", help="who am I / am I a site admin")
 
-    p = sub.add_parser("validate")
+    p = sub.add_parser("validate", help="dry-run a knowledge doc (never writes)")
     p.add_argument("file")
 
-    p = sub.add_parser("upload")
+    p = sub.add_parser("upload", help="create a card from a doc, or overwrite one")
     p.add_argument("file")
-    p.add_argument("--target", default="")
+    p.add_argument("--target", default="",
+                   help="slug of the card to overwrite (omit to create a new one)")
     p.add_argument("--repo", default="")
-    p.add_argument("--force", action="store_true")
+    p.add_argument("--force", action="store_true",
+                   help="import anyway past a 409 duplicate warning")
 
-    p = sub.add_parser("cards")
-    p.add_argument("--all", action="store_true")
+    p = sub.add_parser("cards", help="list my cards")
+    p.add_argument("--all", action="store_true",
+                   help="every member's cards (site admins)")
 
-    p = sub.add_parser("card")
+    p = sub.add_parser("card", help="every field of one card")
     p.add_argument("slug")
 
-    p = sub.add_parser("edit")
+    p = sub.add_parser("edit", help="PATCH one card's fields")
     p.add_argument("slug")
     p.add_argument("--json", dest="json_src", required=True,
                    help="path to a JSON file with the fields to change, or - for stdin")
 
-    for name in ("publish", "unpublish", "delete"):
-        p = sub.add_parser(name)
+    for name, blurb in (("publish", "draft → public feed"),
+                        ("unpublish", "public feed → draft"),
+                        ("delete", "permanent removal")):
+        p = sub.add_parser(name, help=blurb)
         p.add_argument("slug")
 
-    p = sub.add_parser("doc")
+    p = sub.add_parser("doc", help="download a card's knowledge document")
     p.add_argument("slug")
-    p.add_argument("--save", default="")
+    p.add_argument("--save", nargs="?", const=SAVE_DEFAULT, default=None,
+                   metavar="FILE",
+                   help="write the markdown to FILE; bare --save writes ./<slug>.md")
+    p.add_argument("--version", type=int, default=None, metavar="N",
+                   help="fetch stored version N instead of the live render")
+    p.add_argument("--versions", action="store_true",
+                   help="list the version history only, without the markdown "
+                        "(nothing is written, so --save is ignored)")
+    p.add_argument("--with-signals", dest="with_signals", action="store_true",
+                   help="keep the read-only '## Community signals' block "
+                        "(reading only — such a file is NOT upload-ready)")
 
-    sub.add_parser("catalog")
+    p = sub.add_parser("audit", help="my docs that are too thin to teach an AI")
+    p.add_argument("--all", action="store_true",
+                   help="every member's thin docs (site admins)")
 
-    p = sub.add_parser("search")
+    sub.add_parser("catalog", help="every published card (title/summary/tags)")
+
+    p = sub.add_parser("search", help="rank published cards for a goal")
     p.add_argument("query")
     p.add_argument("-k", type=int, default=8)
 
-    p = sub.add_parser("feedback")
+    p = sub.add_parser("feedback", help="log how a workflow went")
     p.add_argument("kind", choices=["picked", "ran_ok", "ran_fail", "gap"])
     p.add_argument("--slug", default="")
     p.add_argument("--query", default="")
     p.add_argument("--note", default="")
 
-    sub.add_parser("gaps")
+    sub.add_parser("gaps", help="most-wanted methods")
 
-    p = sub.add_parser("lesson")
+    p = sub.add_parser("lesson", help="teach the card-generation AI (site admins)")
     p.add_argument("--instruction", required=True,
                    help="the user's edit request, in their own words")
     p.add_argument("--slug", default="")
     p.add_argument("--context", default="",
                    help="one line on what changed as a result")
 
-    p = sub.add_parser("tax")
+    p = sub.add_parser("tax", help="the site's left sidebar (site admins)")
     tax = p.add_subparsers(dest="tax_cmd", required=True)
-    tax.add_parser("get")
+    tax.add_parser("get", help="the sidebar tree + can_edit + head revision id")
     def head_arg(value):
         if str(value).strip().lower() in ("null", "none", ""):
             return "null"
@@ -290,14 +342,14 @@ def main():
         except ValueError:
             raise argparse.ArgumentTypeError("expected a revision id or 'null'")
 
-    tp = tax.add_parser("put")
+    tp = tax.add_parser("put", help="replace the sidebar tree")
     tp.add_argument("--json", dest="json_src", required=True,
                     help="path to a JSON file with {fields:[...]}, or - for stdin")
     tp.add_argument("--label", default="")
     tp.add_argument("--expect-head", dest="expect_head", type=head_arg, default=None,
                     help="head from `tax get`; pass null on a site with no revisions yet")
-    tax.add_parser("history")
-    tr = tax.add_parser("restore")
+    tax.add_parser("history", help="sidebar revision log")
+    tr = tax.add_parser("restore", help="roll the sidebar back to a revision")
     tr.add_argument("id", type=int)
 
     args = ap.parse_args()
@@ -333,22 +385,49 @@ def main():
     if args.cmd == "delete":
         return emit(*request("DELETE", f"/api/v1/cards/{quoted(args.slug)}"))
     if args.cmd == "doc":
-        status, payload = request("GET", f"/api/v1/cards/{quoted(args.slug)}/doc")
-        if args.save and payload.get("ok"):
+        query = []
+        if args.version is not None:
+            if args.version < 1:
+                die("--version takes a version number (1 or higher) from "
+                    f"`doc {args.slug} --versions`.")
+            query.append(f"version={args.version}")
+        # raw=1 asks the server for the doc alone; without it the response
+        # carries an appended read-only community block, so a saved file
+        # would not validate. Opt back in only with --with-signals.
+        if not args.with_signals:
+            query.append("raw=1")
+        status, payload = request(
+            "GET", f"/api/v1/cards/{quoted(args.slug)}/doc"
+                   + ("?" + "&".join(query) if query else ""))
+        if args.versions and payload.get("ok"):
+            # History only — drop the body so the version table stays readable.
+            payload = {k: v for k, v in payload.items() if k != "markdown"}
+            return emit(status, payload)
+        if args.save is not None and payload.get("ok"):
             markdown = payload.get("markdown", "")
-            # The server appends a read-only "## Community signals" block that
-            # the knowledge-doc grammar rejects — strip it so the saved file
-            # validates and can be re-uploaded as-is.
-            cut = markdown.find("\n## Community signals")
-            if cut != -1:
-                markdown = markdown[:cut].rstrip() + "\n"
+            # Fallback for a server that ignores raw=1: the "## Community
+            # signals" block is read-only and the knowledge-doc grammar
+            # rejects it, so a saved file must never carry it.
+            if not args.with_signals:
+                cut = markdown.find("\n## Community signals")
+                if cut != -1:
+                    markdown = markdown[:cut].rstrip() + "\n"
+            dest = (default_doc_path(payload.get("slug") or args.slug)
+                    if args.save is SAVE_DEFAULT else pathlib.Path(args.save))
             try:
-                pathlib.Path(args.save).write_text(markdown, encoding="utf-8")
+                dest.write_text(markdown, encoding="utf-8")
             except OSError as e:
-                die(f"Cannot write {args.save}: {e}")
-            payload = dict(payload, saved_to=args.save,
-                           markdown=f"(saved to {args.save})")
+                die(f"Cannot write {dest}: {e}")
+            # Report what the FILE is, not what was asked for: a stored
+            # version never carries signals, so `--version N --with-signals`
+            # still lands an upload-ready file.
+            payload = dict(payload, saved_to=str(dest), saved_chars=len(markdown),
+                           upload_ready="\n## Community signals" not in markdown,
+                           markdown=f"(saved to {dest})")
         return emit(status, payload)
+    if args.cmd == "audit":
+        return emit(*request("GET", "/api/v1/cards?thin=1"
+                             + ("&all=1" if args.all else "")))
     if args.cmd == "catalog":
         return emit(*request("GET", "/api/v1/catalog"))
     if args.cmd == "search":

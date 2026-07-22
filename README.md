@@ -10,6 +10,9 @@ language (examples below in English; any language works):
 "Rename my HonestDiD card to …"
 "Make the summary more concise."
 "Rewrite step 3's code to use att_gt()."
+"Download the doc for my HonestDiD card so I can edit it."
+"Push my edited statsotter.md back to that card."
+"Which of my docs are too thin? Enrich the worst one."
 "Publish the draft."  /  "Unpublish that card."  /  "Delete the test card."
 "Show me the left sidebar."
 "Add a 'Synthetic Control' sub-category under DiD, and move IV to the top."
@@ -23,6 +26,24 @@ What it covers:
   read/edit every field (title, summary, description, results, inputs, tags,
   figures, steps, AI notes), publish/unpublish drafts, delete. Edits record
   knowledge-doc versions server-side, same as the web editor.
+- **Knowledge docs, as files you own** — every card is also a strictly
+  templated markdown document. Download it (`./<slug>.md`, or any earlier
+  version from the history), edit it by hand or by asking Claude, and push it
+  back: the plugin validates it, shows you exactly what will change on the
+  card, waits for your yes, and reports the new version number. Nothing is
+  lost — versions are immutable and append-only, so an old one can always be
+  downloaded and re-uploaded. (Heads-up: an upload rewrites the card from the
+  file, and steps come back as external steps — platform-method links survive
+  only through a targeted step edit, which the plugin will offer instead.)
+- **Docs are the AI's brain, so they have to be rich.** The card page is for
+  humans; the doc is the corpus the platform's card-generation AI learns from
+  today and the retrieval brain it will use tomorrow. So a bare URL never
+  counts as knowledge here: whatever a linked paper or package page says is
+  read and written *into* the document — assumptions and how to check them,
+  every function argument, a runnable worked example with its real output,
+  failure modes, and the provenance of every source actually read. Ask
+  *"which of my docs are thin?"* and the plugin scores them 0-100, names what
+  is missing, and offers to go research and fill the gaps.
 - **Left sidebar** — view the browse rail from any account; site admins can
   reshape it (fields, sub-categories, tag mappings, ordering), with the full
   history and one-click rollback the website offers.
@@ -86,9 +107,14 @@ the moderation surface: editing any card and editing the left sidebar.
 
 ## How it works
 
-- `skills/manage` — cards, sidebar, account: intent playbooks, safety rules
-  (every destructive or public-facing change is confirmed first), and the
-  knowledge-doc grammar (`skills/manage/references/template.md`).
+- `skills/manage` — cards, docs, sidebar, account: intent playbooks, safety
+  rules (every destructive or public-facing change is confirmed first), the
+  knowledge-doc grammar (`skills/manage/references/template.md`) and the
+  knowledge contract every rich doc follows
+  (`skills/manage/references/knowledge-doc.md`, with a full worked
+  `references/exemplar-doc.md`).
+- `skills/enrich` — the research-and-rewrite pass: reads the sources a thin
+  doc only linked to, and writes what they say into it.
 - `skills/tackle` — find-introduce-confirm-run a published workflow on local
   data.
 - `scripts/sotter.py` — the only thing that talks HTTP: a stdlib-only client
@@ -106,3 +132,10 @@ the moderation surface: editing any card and editing the left sidebar.
   will suggest updating it instead, or you can insist it's different.
 - **Validation errors** — the server names the exact lines; the plugin fixes
   `statsotter.md` and retries automatically (up to 3 rounds).
+- **Warnings on a successful upload** — quality advice (thin AI notes, links
+  without substance, a step with no note…). They never block; they are the
+  list of things to fix to make the doc worth learning from. Say "fix those"
+  and the plugin will.
+- **A downloaded doc won't validate** — it was saved with `--with-signals`,
+  which keeps the read-only community block for reading. Download it again
+  without that flag for an upload-ready file.
